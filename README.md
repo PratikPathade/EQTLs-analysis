@@ -11,6 +11,6 @@ First install the libraries and load them
 
 
 `library(qvalue)`
-library(GEOquery)
-library(MatrixEQTL)`
+`library(GEOquery)`
+`library(MatrixEQTL)`
 
