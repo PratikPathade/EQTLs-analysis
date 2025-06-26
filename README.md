@@ -74,8 +74,11 @@ snpspos <- read.csv("SNP_Position_File.csv", header = TRUE, row.names = 1)
 
 # Load gene position file (required by Matrix eQTL)
 genepos <- read.csv("Gene_Position_file.csv", header = TRUE, row.names = 1)
+```
+---
 
 
+---
 ## 🔄 Step 3: Convert Data to SlicedData Objects for Matrix eQTL
 
 Matrix eQTL requires the input data to be in the form of **SlicedData** objects. This step converts your loaded expression, genotype, and covariate matrices into these objects.
@@ -96,7 +99,9 @@ snps$CreateFromMatrix(geno)
 # Convert covariate matrix to SlicedData object
 cvrt <- SlicedData$new()
 cvrt$CreateFromMatrix(cov_matrix)
-
+```
+---
+---
 
 ## ⚙️ Step 4: Run eQTL Analysis Using Matrix eQTL
 
@@ -134,7 +139,7 @@ me_cis_Liver <- Matrix_eQTL_main(
 )
 ```
 ### Running trans-eQTL Analysis
-
+```r
 me_trans_Liver <- Matrix_eQTL_main(
   snps = snps,
   gene = gene_liver,
@@ -153,6 +158,7 @@ me_trans_Liver <- Matrix_eQTL_main(
   min.pv.by.genesnp = TRUE,
   noFDRsaveMemory = FALSE
 )
-
+```
+---
 
 
