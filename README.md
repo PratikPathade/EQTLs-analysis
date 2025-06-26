@@ -161,4 +161,57 @@ me_trans_Liver <- Matrix_eQTL_main(
 ```
 ---
 
+---
+## 📊 Step 5: Extract and Visualize Significant eQTL Results
+
+After running the eQTL analysis, we extract significant cis- and trans-eQTLs based on a p-value threshold and visualize their distributions using histograms and QQ plots. This helps to assess the overall significance and distribution of the associations.
+
+---
+
+### Extract and Filter cis-eQTLs
+
+```r
+# Extract cis-eQTL results
+cis_eqtls_Liver <- me_cis_Liver$cis$eqtls
+cis_eqtls_Liver <- as.data.table(cis_eqtls_Liver)
+
+# Filter for significant cis-eQTLs (p-value < 0.01)
+cis_eqtls_Liver <- cis_eqtls_Liver %>% filter(pvalue < 0.01)
+
+# Plot histogram of cis-eQTL p-values
+hist(cis_eqtls_Liver$pvalue, breaks=50, main="Histogram of cis-eQTL p-values", xlab="p-value")
+
+# Extract trans-eQTL results
+trans_eqtls_Liver <- me_trans_Liver$all$eqtls
+trans_eqtls_Liver <- as.data.table(trans_eqtls_Liver)
+
+# Filter for significant trans-eQTLs (p-value < 0.01)
+trans_eqtls_Liver <- trans_eqtls_Liver %>% filter(pvalue < 0.01)
+
+# Plot histogram of trans-eQTL p-values
+hist(trans_eqtls_Liver$pvalue, breaks=100, main="Histogram of trans-eQTL p-values", xlab="p-value")
+
+
+# Extract trans-eQTL results
+trans_eqtls_Liver <- me_trans_Liver$all$eqtls
+trans_eqtls_Liver <- as.data.table(trans_eqtls_Liver)
+
+# Filter for significant trans-eQTLs (p-value < 0.01)
+trans_eqtls_Liver <- trans_eqtls_Liver %>% filter(pvalue < 0.01)
+
+# Plot histogram of trans-eQTL p-values
+hist(trans_eqtls_Liver$pvalue, breaks=100, main="Histogram of trans-eQTL p-values", xlab="p-value")
+```
+
+This QQ plot compares observed cis-eQTL p-values to expected p-values under no association. Points above the red line show more significant results than expected by chance, indicating true genetic effects. It helps check if the results are reliable and not due to random noise.
+```r
+qqplot(-log10(runif(nrow(cis_eqtls_Liver))), -log10(cis_eqtls_Liver$pvalue),
+       main="QQ plot of cis-eQTL p-values",
+       xlab="Expected -log10(p)", ylab="Observed -log10(p)")
+abline(0,1, col="red")
+
+```
+
+
+
 
