@@ -101,6 +101,7 @@ cvrt <- SlicedData$new()
 cvrt$CreateFromMatrix(cov_matrix)
 ```
 ---
+
 ---
 
 ## ⚙️ Step 4: Run eQTL Analysis Using Matrix eQTL
@@ -116,7 +117,7 @@ In this step, we perform the actual eQTL mapping using the `Matrix_eQTL_main()` 
 
 ---
 
-### Running cis-eQTL Analysis
+### Running cis-eQTL Analysis for Liver
 
 ```r
 me_cis_Liver <- Matrix_eQTL_main(
@@ -138,7 +139,7 @@ me_cis_Liver <- Matrix_eQTL_main(
   noFDRsaveMemory = FALSE
 )
 ```
-### Running trans-eQTL Analysis
+### Running trans-eQTL Analysis for Liver
 ```r
 me_trans_Liver <- Matrix_eQTL_main(
   snps = snps,
@@ -159,6 +160,53 @@ me_trans_Liver <- Matrix_eQTL_main(
   noFDRsaveMemory = FALSE
 )
 ```
+
+### Running cis-eQTL Analysis for Testis
+
+```r
+me_cis_Testis <- Matrix_eQTL_main(
+  snps = snps,
+  gene = gene_testis,
+  cvrt = cvrt,
+  useModel = modelLINEAR,
+  errorCovariance = numeric(),
+  verbose = TRUE,
+  output_file_name = NULL,                      # no trans output here
+  output_file_name.cis = "cis_eqtls_testis.txt",  # save cis eQTL results
+  pvOutputThreshold = 0,                        # skip trans
+  pvOutputThreshold.cis = 1e-2,                 # enable cis p-value threshold
+  snpspos = snpspos,
+  genepos = genepos,
+  cisDist = 1e6,
+  pvalue.hist = TRUE,
+  min.pv.by.genesnp = TRUE,
+  noFDRsaveMemory = FALSE
+)
+```
+
+### Running trans-eQTL Analysis for Testis
+
+```r
+me_trans_Testis <- Matrix_eQTL_main(
+  snps = snps,
+  gene = gene_testis,
+  cvrt = cvrt,
+  useModel = modelLINEAR,
+  errorCovariance = numeric(),
+  verbose = TRUE,
+  output_file_name = "trans_eqtls_testis.txt",  # save trans eQTL results
+  output_file_name.cis = NULL,                   # skip cis
+  pvOutputThreshold = 1e-6,                      # enable trans p-value threshold
+  pvOutputThreshold.cis = 0,                     # disable cis
+  snpspos = snpspos,
+  genepos = genepos,
+  cisDist = 0,
+  pvalue.hist = TRUE,
+  min.pv.by.genesnp = TRUE,
+  noFDRsaveMemory = FALSE
+)
+```
+
 ---
 
 ---
@@ -174,36 +222,42 @@ After running the eQTL analysis, we extract significant cis- and trans-eQTLs bas
 # Extract cis-eQTL results
 cis_eqtls_Liver <- me_cis_Liver$cis$eqtls
 cis_eqtls_Liver <- as.data.table(cis_eqtls_Liver)
-
 # Filter for significant cis-eQTLs (p-value < 0.01)
 cis_eqtls_Liver <- cis_eqtls_Liver %>% filter(pvalue < 0.01)
-
 # Plot histogram of cis-eQTL p-values
 hist(cis_eqtls_Liver$pvalue, breaks=50, main="Histogram of cis-eQTL p-values", xlab="p-value")
 
 # Extract trans-eQTL results
 trans_eqtls_Liver <- me_trans_Liver$all$eqtls
 trans_eqtls_Liver <- as.data.table(trans_eqtls_Liver)
-
 # Filter for significant trans-eQTLs (p-value < 0.01)
 trans_eqtls_Liver <- trans_eqtls_Liver %>% filter(pvalue < 0.01)
-
 # Plot histogram of trans-eQTL p-values
 hist(trans_eqtls_Liver$pvalue, breaks=100, main="Histogram of trans-eQTL p-values", xlab="p-value")
 
 
+######## For Testis ##################
+# Extract cis-eQTL results
+cis_eqtls_Testis <- me_cis_Testis$cis$eqtls
+cis_eqtls_Testis <- as.data.table(cis_eqtls_Testis)
+# Filter for significant cis-eQTLs (p-value < 0.01)
+cis_eqtls_Testis <- cis_eqtls_Testis %>% filter(pvalue < 0.01)
+# Plot histogram of cis-eQTL p-values
+hist(me_cis_Testis_$pvalue, breaks=50, main="Histogram of cis-eQTL p-values", xlab="p-value")
+
+# For trans eQTLs
 # Extract trans-eQTL results
-trans_eqtls_Liver <- me_trans_Liver$all$eqtls
-trans_eqtls_Liver <- as.data.table(trans_eqtls_Liver)
-
+trans_eqtls_Testis <- me_trans_Testis$all$eqtls
+trans_eqtls_Testis <- as.data.table(trans_eqtls_Testis)
 # Filter for significant trans-eQTLs (p-value < 0.01)
-trans_eqtls_Liver <- trans_eqtls_Liver %>% filter(pvalue < 0.01)
-
+trans_eqtls_Testis <- trans_eqtls_Testis %>% filter(pvalue < 0.01)
 # Plot histogram of trans-eQTL p-values
-hist(trans_eqtls_Liver$pvalue, breaks=100, main="Histogram of trans-eQTL p-values", xlab="p-value")
+hist(trans_eqtls_Testis$pvalue, breaks=50, main="Histogram of cis-eQTL p-values", xlab="p-value")
+
+
 ```
 
-This QQ plot compares observed cis-eQTL p-values to expected p-values under no association. Points above the red line show more significant results than expected by chance, indicating true genetic effects. It helps check if the results are reliable and not due to random noise.
+- This QQ plot compares observed cis-eQTL p-values to expected p-values under no association. Points above the red line show more significant results than expected by chance, indicating true genetic effects. It helps check if the results are reliable and not due to random noise.
 ```r
 qqplot(-log10(runif(nrow(cis_eqtls_Liver))), -log10(cis_eqtls_Liver$pvalue),
        main="QQ plot of cis-eQTL p-values",
