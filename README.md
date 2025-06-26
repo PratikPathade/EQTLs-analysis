@@ -1,13 +1,15 @@
-# eQTL Analysis in R Using Matrix eQTL with Liver and Testis Data
+## 🧬 eQTL Analysis in R Using Matrix eQTL (Liver & Testis)
 
-This tutorial walks through the steps for performing eQTL analysis using the [Matrix eQTL](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3339296/) R package. We use gene expression and genotype data from liver and testis tissue.
+This tutorial provides a step-by-step guide to performing expression quantitative trait loci (eQTL) analysis using the [Matrix eQTL](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3339296/) R package. We use RNA-Seq expression data and SNP genotype data from two tissues: **liver** and **testis**.
 
 ---
 
 ## 🔧 Step 1: Install and Load Required Packages
 
+We begin by installing and loading the necessary R libraries. If you haven’t installed the required packages, uncomment the install commands.
+
 ```r
-# Uncomment to install if not already installed
+# Install packages if not already installed
 # BiocManager::install("org.Ss.eg.db")
 
 library(qvalue)
@@ -22,49 +24,82 @@ library(ggvenn)
 library(clusterProfiler)
 library(org.Ss.eg.db)
 library(biomaRt)
+```
 
+---
 
+## 📂 Step 2: Load Gene Expression Data
 
-# Liver expression matrix
+We load the gene expression matrices for liver and testis. Each file should be in CSV format:
+
+* Rows = Genes
+* Columns = Samples
+* First column = row names (gene IDs)
+
+```r
+# Read liver expression matrix
 LIver_expr <- read.csv("expression_data_liver.csv", row.names = 1, check.names = FALSE)
 LIver_expr <- data.matrix(LIver_expr)
 
-# Testis expression matrix
+# Read testis expression matrix
 Test_expr <- read.csv("expression_data_Testis.csv", row.names = 1, check.names = FALSE)
 Test_expr <- data.matrix(Test_expr)
+```
 
+---
 
+## 🧬 Step 3: Load Genotype Data
+
+The genotype matrix should:
+
+* Have SNPs as rows
+* Samples as columns
+* SNP IDs as row names (e.g., rs1234\_A)
+
+We also clean the SNP names to keep only the base SNP ID:
+
+```r
+# Load genotype matrix
 geno <- read.csv("Genotype_matrix.csv", row.names = 1, check.names = FALSE)
 geno <- data.matrix(geno)
 
-# Fix SNP names if needed
-rownames(geno) <- sub("_[ACGT]+$", "", rownames(geno))
+# Simplify SNP names by removing allele suffix
+geno_names <- rownames(geno)
+rownames(geno) <- sub("_[ACGT]+$", "", geno_names)
+```
 
+---
 
+## 🧾 Step 4: Load Covariate Metadata
+
+Covariates (e.g., **batch**, **RIN**, **sex**) are important to adjust for potential confounding effects in eQTL analysis. Including these in the model helps to account for variation that is not due to genotype.
+
+Your `Metadata.csv` file should:
+
+* ✅ Have **sample IDs as row names**
+* ✅ Contain one or more **columns of covariates**
+
+In this step, we extract the **second column** as a covariate of interest (e.g., batch or treatment group) and convert it into a **1-row matrix** required by the Matrix eQTL format.
+
+```r
+# Load metadata containing covariates (e.g., batch, RIN)
 cov <- read.csv("Metadata.csv", row.names = 1, check.names = FALSE)
 cov <- data.matrix(cov)
 
-# Convert to matrix format for Matrix eQTL
-cov_vector <- setNames(cov[,2], cov[,1])
+# Extract second column as covariate vector (e.g., batch information)
+cov_vector <- setNames(cov[,2], rownames(cov))
+
+# Convert vector to 1-row matrix for Matrix eQTL
 cov_matrix <- matrix(cov_vector, nrow = 1)
 
-# Assign sample names
+# Set column names to match sample IDs
 colnames(cov_matrix) <- names(cov_vector)
+```
 
+✅ **Important**: Make sure that the **sample names in your covariate matrix** match exactly with the column names of your **expression** and **genotype** matrices.
 
-gene_liver <- SlicedData$new()
-gene_liver$CreateFromMatrix(LIver_expr)
+➡️ You can also extract **multiple covariates** by adjusting the column selection:
 
-gene_testis <- SlicedData$new()
-gene_testis$CreateFromMatrix(Test_expr)
-
-snps <- SlicedData$new()
-snps$CreateFromMatrix(geno)
-
-cvrt <- SlicedData$new()
-cvrt$CreateFromMatrix(cov_matrix)
-
-
-
-snpspos <- read.csv("SNP_Position_File.csv", header = TRUE, row.names = 1)
-genepos <- read.csv("Gene_Position_file.csv", header = TRUE, row.names = 1)
+```r
+cov_matrix <- t(cov[, c(2, 3)])  # for two covariates
+```
